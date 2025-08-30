@@ -14,8 +14,7 @@ export default {
     },
   },
   safelist: [
-    'bg-primary', 'bg-secondary', 'text-text', 'bg-accent', 'bg-warning', 'bg-error', 'bg-success',
-    // Add more if needed
+    'bg-primary', 'bg-secondary', 'text-text', 'bg-accent', 'bg-warning', 'bg-error', 'bg-success', 'bg-gray-800', 'border-gray-700',
   ],
   plugins: [],
 };

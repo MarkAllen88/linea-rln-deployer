@@ -99,7 +99,7 @@ function App() {
           value={proofAddress}
           onChange={(e) => setProofAddress(e.target.value)}
           placeholder="Proof / address"
-          className="w-full bg-gray-800 p-2 rounded mb-2 border border-gray-700"
+          className="w-full bg-[#1e293b] p-2 rounded mb-2 border border-gray-700" // Arbitrary secondary for input
         />
         <button onClick={sendTransaction} className="w-full bg-success px-3 py-2 rounded hover:opacity-90">Submit</button>
       </section>
@@ -133,14 +133,14 @@ function App() {
               type="number"
               value={offerAmount}
               onChange={(e) => setOfferAmount(e.target.value)}
-              className="flex-1 bg-gray-800 p-2 rounded border border-gray-700"
+              className="flex-1 bg-[#1e293b] p-2 rounded border border-gray-700"
             />
             <span>MRKO in exchange for</span>
             <input
               type="number"
               value={wantAmount}
               onChange={(e) => setWantAmount(e.target.value)}
-              className="flex-1 bg-gray-800 p-2 rounded border border-gray-700"
+              className="flex-1 bg-[#1e293b] p-2 rounded border border-gray-700"
             />
             <span>ETH</span>
           </div>
@@ -148,18 +148,18 @@ function App() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title (optional)"
-            className="w-full bg-gray-800 p-2 rounded border border-gray-700"
+            className="w-full bg-[#1e293b] p-2 rounded border border-gray-700"
           />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description (optional)"
-            className="w-full bg-gray-800 p-2 rounded border border-gray-700 h-20"
+            className="w-full bg-[#1e293b] p-2 rounded border border-gray-700 h-20"
           />
           <select
             value={expiry}
             onChange={(e) => setExpiry(e.target.value)}
-            className="w-full bg-gray-800 p-2 rounded border border-gray-700"
+            className="w-full bg-[#1e293b] p-2 rounded border border-gray-700"
           >
             <option>Offer expires in: 24 hours</option>
           </select>

@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  background-color: #0f172a; /* primary */
+  color: #f1f5f9; /* text */
+  min-height: 100vh;
+  font-family: sans-serif;
+}
