@@ -15,6 +15,7 @@ export default {
   },
   safelist: [
     'bg-primary', 'bg-secondary', 'text-text', 'bg-accent', 'bg-warning', 'bg-error', 'bg-success', 'bg-gray-800', 'border-gray-700',
+    'hover:bg-blue-600', 'hover:opacity-90', 'focus:border-accent',
   ],
   plugins: [],
 };

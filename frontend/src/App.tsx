@@ -62,7 +62,6 @@ function App() {
     try {
       const node = await createLightNode({
         defaultBootstrap: true,
-        libp2p: { addresses: { listen: ['/ip4/127.0.0.1/tcp/8000/ws'] } }
       });
       await node.start();
       await waitForRemotePeer(node, ['lightpush', 'filter']);
@@ -79,68 +78,68 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-primary text-text space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-accent flex items-center mb-4">
+    <div className="flex flex-col items-center justify-start min-h-screen bg-[#0f172a] text-[#f1f5f9] space-y-6 p-4">
+      <h1 className="text-2xl font-bold text-[#0ea5e9] flex items-center mb-4">
         <span className="mr-2">🚀</span> RLN Demo (Linea Sepolia)
       </h1>
 
-      <section className="w-full max-w-lg bg-secondary rounded-xl p-4 shadow-md">
+      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
         <h2 className="text-lg font-semibold mb-2">Read-only Info</h2>
         <div className="flex justify-between items-center">
-          <button onClick={getCurrentEpoch} className="bg-accent px-3 py-1 rounded text-sm hover:opacity-90">Get Current Epoch</button>
+          <button onClick={getCurrentEpoch} className="bg-[#0ea5e9] px-3 py-1 rounded text-sm hover:bg-[#0c8dce] transition">Get Current Epoch</button>
           <p>Epoch: {epoch}</p>
         </div>
       </section>
 
-      <section className="w-full max-w-lg bg-secondary rounded-xl p-4 shadow-md">
+      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
         <h2 className="text-lg font-semibold mb-2">Send a transaction (optional)</h2>
         <input
           type="text"
           value={proofAddress}
           onChange={(e) => setProofAddress(e.target.value)}
           placeholder="Proof / address"
-          className="w-full bg-[#1e293b] p-2 rounded mb-2 border border-gray-700" // Arbitrary secondary for input
+          className="w-full bg-gray-800 p-2 rounded mb-2 border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition"
         />
-        <button onClick={sendTransaction} className="w-full bg-success px-3 py-2 rounded hover:opacity-90">Submit</button>
+        <button onClick={sendTransaction} className="w-full bg-[#10b981] px-3 py-2 rounded hover:bg-[#0e9f6e] transition">Submit</button>
       </section>
 
-      <section className="w-full max-w-lg bg-secondary rounded-xl p-4 shadow-md">
+      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
         <h2 className="text-lg font-semibold mb-2">Wallet Status</h2>
         {!address ? (
-          <button onClick={connectWallet} className="bg-accent px-3 py-2 rounded w-full hover:opacity-90">Connect Wallet</button>
+          <button onClick={connectWallet} className="w-full bg-[#0ea5e9] px-3 py-2 rounded hover:bg-[#0c8dce] transition">Connect Wallet</button>
         ) : (
           <div className="space-y-1">
-            <p className="bg-blue-600 p-2 rounded">ETH: {ethBalance} (Linea Sepolia)</p>
-            <p className="bg-orange-600 p-2 rounded">MRKO: {mrkoBalance}</p>
+            <p className="bg-[#0ea5e9] p-2 rounded">ETH: {ethBalance} (Linea Sepolia)</p>
+            <p className="bg-[#f59e0b] p-2 rounded">MRKO: {mrkoBalance}</p>
             <p className="text-sm text-gray-400">Address: {address.slice(0, 6)}...{address.slice(-4)}</p>
           </div>
         )}
-        <p className="bg-warning p-2 rounded mt-2 text-sm">Need More Funding - Get testnet coins</p>
+        <p className="bg-[#f59e0b] p-2 rounded mt-2 text-sm">Need More Funding - Get testnet coins</p>
       </section>
 
-      <section className="w-full max-w-lg bg-secondary rounded-xl p-4 shadow-md">
+      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
         <h2 className="text-lg font-semibold mb-2">Connection Status</h2>
-        <button onClick={connectWaku} className="bg-accent px-3 py-2 rounded w-full hover:opacity-90">Connect to Waku</button>
+        <button onClick={connectWaku} className="w-full bg-[#0ea5e9] px-3 py-2 rounded hover:bg-[#0c8dce] transition">Connect to Waku</button>
         <p className="mt-2 text-sm">Status: {wakuStatus}</p>
-        {wakuStatus.includes('error') && <p className="bg-error p-2 rounded mt-2 text-sm">Error: {wakuStatus.split('error: ')[1]}</p>}
+        {wakuStatus.includes('error') && <p className="bg-[#ef4444] p-2 rounded mt-2 text-sm">Error: {wakuStatus.split('error: ')[1]}</p>}
       </section>
 
-      <section className="w-full max-w-lg bg-secondary rounded-xl p-4 shadow-md">
-        <h2 className="text-lg font-semibold text-green-400 mb-2">Create Value Exchange</h2>
+      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
+        <h2 className="text-lg font-semibold text-[#10b981] mb-2">Create Value Exchange</h2>
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <input
               type="number"
               value={offerAmount}
               onChange={(e) => setOfferAmount(e.target.value)}
-              className="flex-1 bg-[#1e293b] p-2 rounded border border-gray-700"
+              className="flex-1 bg-gray-800 p-2 rounded border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition"
             />
             <span>MRKO in exchange for</span>
             <input
               type="number"
               value={wantAmount}
               onChange={(e) => setWantAmount(e.target.value)}
-              className="flex-1 bg-[#1e293b] p-2 rounded border border-gray-700"
+              className="flex-1 bg-gray-800 p-2 rounded border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition"
             />
             <span>ETH</span>
           </div>
@@ -148,22 +147,22 @@ function App() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title (optional)"
-            className="w-full bg-[#1e293b] p-2 rounded border border-gray-700"
+            className="w-full bg-gray-800 p-2 rounded border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition"
           />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description (optional)"
-            className="w-full bg-[#1e293b] p-2 rounded border border-gray-700 h-20"
+            className="w-full bg-gray-800 p-2 rounded border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition h-20"
           />
           <select
             value={expiry}
             onChange={(e) => setExpiry(e.target.value)}
-            className="w-full bg-[#1e293b] p-2 rounded border border-gray-700"
+            className="w-full bg-gray-800 p-2 rounded border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition"
           >
             <option>Offer expires in: 24 hours</option>
           </select>
-          <button onClick={submitOffer} className="w-full bg-green-500 px-3 py-2 rounded hover:opacity-90">Submit Offer</button>
+          <button onClick={submitOffer} className="w-full bg-[#10b981] px-3 py-2 rounded hover:bg-[#0e9f6e] transition">Submit Offer</button>
         </div>
       </section>
     </div>
