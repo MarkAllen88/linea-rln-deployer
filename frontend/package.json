@@ -10,10 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.12",
+    "@waku/rln": "^0.1.8",
+    "@waku/sdk": "^0.0.34",
     "dotenv": "^17.2.1",
     "ethers": "^6.15.0",
+    "protobufjs": "^7.5.4",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "tailwindcss": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

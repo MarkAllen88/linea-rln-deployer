@@ -1,136 +1,78 @@
-import { useEffect, useState } from "react";
-import { ethers } from "ethers";
-import "./App.css";
-
-import rlnAbi from "./abi/RLN.json";
-import deployInfo from "./deployInfo.json";
-
-// Vite injects env vars that start with VITE_
-const RPC_URL = import.meta.env.VITE_LINEA_SEPOLIA_RPC_URL;
-const PRIVATE_KEY = import.meta.env.VITE_ETH_PRIVATE_KEY; // optional – only needed for txs
+import { useState } from 'react';
 
 function App() {
-  const [provider, setProvider] = useState<ethers.Provider>();
-  const [signer, setSigner] = useState<ethers.Signer>();
-  const [contract, setContract] = useState<ethers.Contract>();
-  const [epoch, setEpoch] = useState<string>("—");
-  const [proofInput, setProofInput] = useState<string>("");
-  const [txHash, setTxHash] = useState<string>("");
+  const [epoch, setEpoch] = useState('-');
+  const [proofAddress, setProofAddress] = useState('');
 
-  // -----------------------------------------------------------------
-  // Initialise provider, signer (if we have a private key), and contract
-  // -----------------------------------------------------------------
-  useEffect(() => {
-    if (!RPC_URL) {
-      console.error("❌ Missing VITE_LINEA_SEPOLIA_RPC_URL");
-      return;
-    }
-
-    const prov = new ethers.JsonRpcProvider(RPC_URL);
-    setProvider(prov);
-
-    if (PRIVATE_KEY) {
-      const wallet = new ethers.Wallet(PRIVATE_KEY, prov);
-      setSigner(wallet);
-    }
-
-    // The address comes from src/deployInfo.json (generated from .deploy)
-    const rl = new ethers.Contract(
-      // @ts-ignore – the JSON shape is simple
-      (deployInfo as any).address,
-      rlnAbi.abi,
-      prov
-    );
-    setContract(rl);
-  }, []);
-
-  // -----------------------------------------------------------------
-  // Read‑only call: fetch the current epoch (or any view fn you have)
-  // -----------------------------------------------------------------
-  const fetchEpoch = async () => {
-    if (!contract) {
-      alert("Contract not loaded yet.");
-      return;
-    }
-    try {
-      // 👉 Replace `getCurrentEpoch` with the exact view function name you exported
-      const cur = await (contract as any).getCurrentEpoch?.();
-      setEpoch(cur?.toString() ?? "N/A");
-    } catch (e) {
-      console.error(e);
-      setEpoch("error");
-    }
+  const getCurrentEpoch = async () => {
+    // Your logic to fetch epoch from contract (using ethers)
+    // For now, mock it
+    setEpoch(Math.floor(Date.now() / 1000).toString());
   };
 
-  // -----------------------------------------------------------------
-  // Optional: send a signed transaction (requires VITE_ETH_PRIVATE_KEY)
-  // -----------------------------------------------------------------
-  const sendTx = async () => {
-    if (!signer || !contract) {
-      alert(
-        "No signer configured – add VITE_ETH_PRIVATE_KEY to .env.local to enable txs."
-      );
-      return;
-    }
-
-    try {
-      const rlWithSigner = contract.connect(signer);
-      // 👉 Replace `setSemaphore` with the mutating function you actually want to call
-      const tx = await rlWithSigner.setSemaphore(proofInput);
-      setTxHash(tx.hash);
-      await tx.wait();
-      alert("✅ Transaction mined!");
-    } catch (err: any) {
-      console.error(err);
-      alert(`❌ Tx failed: ${err.message}`);
-    }
+  const sendTransaction = async () => {
+    // Your logic to send tx with proof/address
+    console.log('Sending:', proofAddress);
   };
 
-  // -----------------------------------------------------------------
-  // Render UI
-  // -----------------------------------------------------------------
   return (
-    <div className="App" style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1>🚀 RLN Demo (Linea Sepolia)</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 space-y-8">
+      {/* Header */}
+      <h1 className="text-3xl font-bold text-[--accent] flex items-center">
+        <span className="mr-2">🚀</span> RLN Demo (Linea Sepolia)
+      </h1>
 
-      {/* -------------------- Read‑only section -------------------- */}
-      <section style={{ marginBottom: "2rem" }}>
-        <h2>Read‑only info</h2>
-        <button onClick={fetchEpoch} style={{ marginRight: "1rem" }}>
-          Get Current Epoch
-        </button>
-        <span>Epoch: {epoch}</span>
-      </section>
+      {/* Read-only Info Card */}
+      <div className="w-full max-w-md bg-[--secondary] rounded-lg shadow-lg p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-[--text]">Read-only Info</h2>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={getCurrentEpoch}
+            className="bg-[--accent] text-[--text] px-4 py-2 rounded-md hover:bg-blue-600 transition"
+          >
+            Get Current Epoch
+          </button>
+          <p className="text-[--text]">Epoch: {epoch}</p>
+        </div>
+      </div>
 
-      {/* -------------------- Transaction section -------------------- */}
-      <section>
-        <h2>Send a transaction (optional)</h2>
+      {/* Send Transaction Card */}
+      <div className="w-full max-w-md bg-[--secondary] rounded-lg shadow-lg p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-[--text]">Send a transaction (optional)</h2>
         <input
           type="text"
+          value={proofAddress}
+          onChange={(e) => setProofAddress(e.target.value)}
           placeholder="Proof / address"
-          value={proofInput}
-          onChange={(e) => setProofInput(e.target.value)}
-          style={{
-            padding: "0.5rem",
-            marginRight: "0.5rem",
-            minWidth: "250px",
-          }}
+          className="w-full bg-gray-800 text-[--text] px-4 py-2 rounded-md border border-gray-600 focus:outline-none focus:border-[--accent]"
         />
-        <button onClick={sendTx}>Submit</button>
+        <button
+          onClick={sendTransaction}
+          className="w-full bg-[--success] text-[--text] px-4 py-2 rounded-md hover:bg-green-600 transition"
+        >
+          Submit
+        </button>
+      </div>
 
-        {txHash && (
-          <p>
-            Tx hash:{" "}
-            <a
-              href={`https://sepolia.lineascan.build/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {txHash.slice(0, 10)}…{txHash.slice(-8)}
-            </a>
-          </p>
-        )}
-      </section>
+      {/* Placeholder for Wallet Status (like Veri) */}
+      <div className="w-full max-w-md bg-[--secondary] rounded-lg shadow-lg p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-[--text]">Wallet Status</h2>
+        {/* Add connect button and balances here as in previous code */}
+        <div className="bg-[--warning] text-[--text] p-2 rounded-md">Need More Funding - Get testnet coins</div>
+      </div>
+
+      {/* Placeholder for Waku Connection */}
+      <div className="w-full max-w-md bg-[--secondary] rounded-lg shadow-lg p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-[--text]">Connection Status</h2>
+        <button className="bg-[--accent] text-[--text] px-4 py-2 rounded-md">Connect to Waku</button>
+        <div className="bg-[--error] text-[--text] p-2 rounded-md">Error: Waku initialization failed</div>
+      </div>
+
+      {/* Placeholder for Create Offer */}
+      <div className="w-full max-w-md bg-[--secondary] rounded-lg shadow-lg p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-green-400">Create Value Exchange</h2>
+        {/* Add form fields here as in previous code */}
+      </div>
     </div>
   );
 }
