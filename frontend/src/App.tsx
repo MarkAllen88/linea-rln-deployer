@@ -2,14 +2,19 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { createLightNode, waitForRemotePeer } from '@waku/sdk';
 
-// Replace with your actual MRKO token address and ABI from linea-rln-deployer repo
-const MRKO_ADDRESS = '0x5ddc2B6825F7eb721b80F5F3976E2BD3F0074817'; // From your logs
+// MRKO Token details from your logs/repo
+const MRKO_ADDRESS = '0x5ddc2B6825F7eb721b80F5F3976E2BD3F0074817';
 const MRKO_ABI = [
-  // Basic ERC20 ABI for balanceOf; expand as needed
   'function balanceOf(address owner) view returns (uint256)',
-  // Add more if required, e.g., 'function decimals() view returns (uint8)'
 ];
-const RLN_CONTRACT_ADDRESS = '0xc2A987F8594892934734549e742B7A5C3c2754bb'; // From your latest deploy
+
+// RLN Contract details
+const RLN_CONTRACT_ADDRESS = '0xc2A987F8594892934734549e742B7A5C3c2754bb';
+// Add RLN ABI if you have it for epoch, e.g.:
+const RLN_ABI = [
+  'function getCurrentEpoch() view returns (uint256)',
+  // Add more methods as needed
+];
 
 function App() {
   const [epoch, setEpoch] = useState('-');
@@ -20,25 +25,24 @@ function App() {
   const [wakuStatus, setWakuStatus] = useState('disconnected');
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
 
-  // Get Epoch (integrate with RLN contract)
+  // Get Epoch from RLN contract
   const getCurrentEpoch = async () => {
     if (provider) {
-      const rlnContract = new ethers.Contract(RLN_CONTRACT_ADDRESS, [], provider); // Add RLN ABI if needed for getCurrentEpoch
+      const rlnContract = new ethers.Contract(RLN_CONTRACT_ADDRESS, RLN_ABI, provider);
       try {
-        const currentEpoch = await rlnContract.getCurrentEpoch(); // Adjust method name based on your contract
+        const currentEpoch = await rlnContract.getCurrentEpoch();
         setEpoch(currentEpoch.toString());
       } catch (e) {
-        setEpoch('Error: ' + e.message);
+        console.error('Epoch fetch error:', e);
+        setEpoch(Math.floor(Date.now() / 1000 / 3600).toString()); // Fallback
       }
-    } else {
-      setEpoch(Math.floor(Date.now() / 1000 / 3600).toString()); // Fallback mock
     }
   };
 
-  // Send Transaction (placeholder; integrate your logic)
+  // Send Transaction (placeholder)
   const sendTransaction = async () => {
-    console.log('Submitting:', proofAddress);
-    // Add ethers tx here if needed, e.g., call RLN contract
+    console.log('Submitting proof/address:', proofAddress);
+    // Integrate RLN tx here
   };
 
   // Wallet Connect
@@ -59,7 +63,7 @@ function App() {
     }
   }, [provider, address]);
 
-  // Waku Connect
+  // Waku Connect to local node
   const connectWaku = async () => {
     try {
       const node = await createLightNode({
@@ -122,16 +126,17 @@ function App() {
         <h2 className="text-lg font-semibold mb-2">Connection Status</h2>
         <button onClick={connectWaku} className="bg-[--accent] px-3 py-2 rounded w-full hover:opacity-90">Connect to Waku</button>
         <p className="mt-2 text-sm">Status: {wakuStatus}</p>
-        {wakuStatus.includes('error') && <p className="bg-[--error] p-2 rounded mt-2 text-sm">Error: Waku initialization failed</p>}
+        {wakuStatus.includes('error') && <p className="bg-[--error] p-2 rounded mt-2 text-sm">{wakuStatus}</p>}
       </section>
 
       <section className="w-full max-w-lg bg-[--secondary] rounded-xl p-4 shadow-md">
         <h2 className="text-lg font-semibold text-green-400 mb-2">Create Value Exchange</h2>
         <div className="space-y-2">
-          <div className="flex space-x-2">
-            <input type="number" placeholder="0.001" className="flex-1 bg-gray-800 p-2 rounded border border-gray-700" /> <span>MRKO</span>
-            <span>in exchange for</span>
-            <input type="number" placeholder="0.01" className="flex-1 bg-gray-800 p-2 rounded border border-gray-700" /> <span>ETH</span>
+          <div className="flex space-x-2 items-center">
+            <input type="number" placeholder="0.001" className="flex-1 bg-gray-800 p-2 rounded border border-gray-700" />
+            <span>MRKO in exchange for</span>
+            <input type="number" placeholder="0.01" className="flex-1 bg-gray-800 p-2 rounded border border-gray-700" />
+            <span>ETH</span>
           </div>
           <input placeholder="Title (optional)" className="w-full bg-gray-800 p-2 rounded border border-gray-700" />
           <textarea placeholder="Description (optional)" className="w-full bg-gray-800 p-2 rounded border border-gray-700 h-20" />

@@ -2,14 +2,19 @@
 
 @theme {
   --color-primary: #0f172a; /* Dark slate bg */
-  --color-secondary: #1e293b; /* Slightly lighter card bg */
-  --color-accent: #0ea5e9; /* Cyan blue for buttons/sections */
-  --color-warning: #f59e0b; /* Orange for alerts */
-  --color-error: #ef4444; /* Red for errors */
-  --color-success: #10b981; /* Green for success/submits */
+  --color-secondary: #1e293b; /* Card bg */
+  --color-accent: #0ea5e9; /* Cyan blue */
+  --color-warning: #f59e0b; /* Orange alert */
+  --color-error: #ef4444; /* Red error */
+  --color-success: #10b981; /* Green submit */
   --color-text: #f1f5f9; /* Light text */
 }
 
 body {
-  @apply bg-[--primary] text-[--text] min-h-screen font-sans;
+  @apply bg-[--primary] text-[--text] min-h-screen font-sans antialiased;
+}
+
+/* Override any light defaults */
+* {
+  @apply border-gray-700;
 }
