@@ -1,0 +1,21 @@
+{
+  "name": "rln-hardhat-standalone",
+  "version": "1.0.0",
+  "description": "A standalone Hardhat project for deploying and interacting with an RLN contract.",
+  "type": "module",
+  "scripts": {
+    "compile": "npx hardhat compile --config ./hardhat.config.cjs",
+    "deploy": "node scripts/deploy.js",
+    "interact": "node scripts/interact.js",
+    "clean": "npx hardhat clean --config ./hardhat.config.cjs"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.6",
+    "hardhat": "^2.22.6"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.1"
+  }
+}
+

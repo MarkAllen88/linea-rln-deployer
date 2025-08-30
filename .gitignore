@@ -1,0 +1,14 @@
+# Node
+node_modules/
+npm-debug.log
+
+# Hardhat
+cache/
+artifacts/
+coverage/
+coverage.json
+typechain-types/
+
+# Secrets - VERY IMPORTANT
+.env
+.deploy
