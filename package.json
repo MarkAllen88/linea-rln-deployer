@@ -10,12 +10,16 @@
     "clean": "npx hardhat clean --config ./hardhat.config.cjs"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-ethers": "^3.0.6",
-    "hardhat": "^2.22.6"
+    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@types/node": "^24.3.0",
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.26.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "ethers": "^6.13.1"
+    "@waku/sdk": "^0.0.34"
   }
 }
-

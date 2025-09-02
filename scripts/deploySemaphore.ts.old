@@ -1,0 +1,52 @@
+// scripts/deploySemaphore.ts
+import "dotenv/config";
+import { ethers } from "hardhat";
+
+async function main() {
+  // ── Load environment variables ────────────────────────────────────────
+  const treeDepthStr = process.env.TREE_DEPTH;
+  if (!treeDepthStr) {
+    throw new Error("❌ TREE_DEPTH not set in .env");
+  }
+  const treeDepth = Number(treeDepthStr);
+  if (isNaN(treeDepth) || treeDepth <= 0) {
+    throw new Error(`❌ Invalid TREE_DEPTH value: "${treeDepthStr}"`);
+  }
+
+  console.log("\n🚀 Deploying Semaphore with parameters:");
+  console.log(`   treeDepth : ${treeDepth}`);
+
+  // ── Get the contract factory ─────────────────────────────────────────────
+  const SemaphoreFactory = await ethers.getContractFactory("Semaphore");
+
+  // ── Deploy ───────────────────────────────────────────────────────────────
+  const semaphore = await SemaphoreFactory.deploy(treeDepth);
+
+  // Wait for the deployment to be mined (works for ethers v5 & v6)
+  if ((semaphore as any).deployed) {
+    await (semaphore as any).deployed();
+    console.log(`✅ Semaphore deployed at: ${(semaphore as any).address}`);
+  } else if ((semaphore as any).waitForDeployment) {
+    await (semaphore as any).waitForDeployment();
+    const addr = (semaphore as any).target ?? (await (semaphore as any).getAddress());
+    console.log(`✅ Semaphore deployed at: ${addr}`);
+  } else {
+    throw new Error("Unable to determine deployment method for the contract instance.");
+  }
+
+  // ── Optional: save the address locally ───────────────────────────────────
+  // You can uncomment the block below if you want a .deploy file.
+  
+  import fs from "fs";
+  import path from "path";
+  const outPath = path.resolve(__dirname, "..", ".semaphore-deploy");
+  fs.writeFileSync(outPath, JSON.stringify({ address: (semaphore as any).address }, null, 2));
+  console.log(`📝 Deployment address saved to: ${outPath}`);
+  
+}
+
+// ------------------------------------------------------------------------
+main().catch((error) => {
+  console.error("\n❌ Deployment failed:", error);
+  process.exit(1);
+});

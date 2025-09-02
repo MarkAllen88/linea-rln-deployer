@@ -1,0 +1,11 @@
+./frontend/public/vite.svg
+./frontend/src/App.tsx
+./frontend/src/main.tsx
+./frontend/src/.DS_Store
+./frontend/src/deployInfo.json
+./frontend/src/App.css
+./frontend/src/index.css
+./frontend/src/abi/RLN.json
+./frontend/src/vite-env.d.ts
+./frontend/src/assets/react.svg
+./README.md

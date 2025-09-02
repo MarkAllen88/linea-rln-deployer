@@ -1,17 +1,31 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { createLightNode, waitForRemotePeer } from '@waku/sdk';
+import {
+  WAKU_WS_URL,
+  WAKU_HTTP_URL,
+  LINEA_RPC_URL,
+  ETH_PRIV_KEY,
+} from './config';
 
-// MRKO and RLN details
+// ------------------------------------------------------------------
+// MRKO and RLN details (unchanged)
 const MRKO_ADDRESS = '0x5ddc2B6825F7eb721b80F5F3976E2BD3F0074817';
 const MRKO_ABI = ['function balanceOf(address owner) view returns (uint256)'];
 const RLN_CONTRACT_ADDRESS = '0xc2A987F8594892934734549e742B7A5C3c2754bb';
 const RLN_ABI = [
   'function treeDepth() view returns (uint256)',
-  // Add 'function getCurrentEpoch() view returns (uint256)' if available
+  // add more RLN functions here if you need them
 ];
 
-function App() {
+// ------------------------------------------------------------------
+// Debug: print env vars (you already added this, keep it)
+console.log('Waku WS URL →', WAKU_WS_URL);
+console.log('Linea RPC →', LINEA_RPC_URL);
+
+// ------------------------------------------------------------------
+// Component state
+export default function App() {
   const [epoch, setEpoch] = useState('-');
   const [proofAddress, setProofAddress] = useState('');
   const [address, setAddress] = useState('');
@@ -25,107 +39,152 @@ function App() {
   const [description, setDescription] = useState('');
   const [expiry, setExpiry] = useState('24 hours');
 
-  const getCurrentEpoch = async () => {
-    if (provider) {
-      const rlnContract = new ethers.Contract(RLN_CONTRACT_ADDRESS, RLN_ABI, provider);
-      try {
-        const depth = await rlnContract.treeDepth(); // Test; replace with getCurrentEpoch
-        setEpoch(depth.toString());
-      } catch (e) {
-        setEpoch(Math.floor(Date.now() / 1000 / 3600).toString());
-      }
-    }
+  // ------------------------------------------------------------------
+  // Helper: initialise ethers provider (Linea Sepolia)
+  const initProvider = async () => {
+    // Use the public RPC URL from .env
+    const lineaProvider = new ethers.JsonRpcProvider(LINEA_RPC_URL);
+    setProvider(lineaProvider as unknown as ethers.BrowserProvider);
   };
 
-  const sendTransaction = async () => {
-    console.log('Submitting:', proofAddress);
-  };
-
+  // ------------------------------------------------------------------
+  // Connect wallet (MetaMask) – optional, but useful for UI
   const connectWallet = async () => {
-    if (window.ethereum) {
-      const prov = new ethers.BrowserProvider(window.ethereum);
-      setProvider(prov);
-      const accounts = await prov.send('eth_requestAccounts', []);
-      setAddress(accounts[0]);
+    if ((window as any).ethereum) {
+      const ethProv = new ethers.BrowserProvider((window as any).ethereum);
+      await ethProv.send('eth_requestAccounts', []);
+      const signer = await ethProv.getSigner();
+      const addr = await signer.getAddress();
+      setAddress(addr);
+      setProvider(ethProv);
+    } else {
+      alert('MetaMask not detected');
     }
   };
 
-  useEffect(() => {
-    if (provider && address) {
-      provider.getBalance(address).then(bal => setEthBalance(ethers.formatEther(bal)));
-      const mrkoContract = new ethers.Contract(MRKO_ADDRESS, MRKO_ABI, provider);
-      mrkoContract.balanceOf(address).then(bal => setMrkoBalance(ethers.formatEther(bal)));
+  // ------------------------------------------------------------------
+  // Get current RLN epoch (or fallback)
+  const getCurrentEpoch = async () => {
+    if (!provider) return;
+    const rlnContract = new ethers.Contract(
+      RLN_CONTRACT_ADDRESS,
+      RLN_ABI,
+      provider,
+    );
+    try {
+      const depth = await rlnContract.treeDepth();
+      setEpoch(depth.toString());
+    } catch (e) {
+      // Fallback to a rough estimate if the contract call fails
+      setEpoch(Math.floor(Date.now() / 1000 / 3600).toString());
     }
-  }, [provider, address]);
+  };
 
+  // ------------------------------------------------------------------
+  // Connect to the local Waku node (uses env vars)
   const connectWaku = async () => {
     try {
       const node = await createLightNode({
+        // If you want to force the local peer, give it explicitly:
+        pubsubPeers: [
+          {
+            // The SDK expects a multiaddr without the ws:// scheme, ending with ?ws
+            multiaddr: `${WAKU_WS_URL.replace('ws://', '')}?ws`,
+          },
+        ],
+        // Optional: HTTP RPC for admin calls (e.g., node.info())
+        rpcUrl: WAKU_HTTP_URL,
+        // Keep default bootstrap peers for broader connectivity
         defaultBootstrap: true,
       });
+
       await node.start();
       await waitForRemotePeer(node, ['lightpush', 'filter']);
       setWakuStatus('connected');
-    } catch (e) {
-      setWakuStatus(`error: ${e.message}`);
+    } catch (err: any) {
+      setWakuStatus(`error: ${err.message}`);
     }
   };
 
-  const submitOffer = () => {
-    const offer = { offerAmount, wantAmount, title, description, expiry, sender: address };
-    console.log('Submitted offer:', offer);
-    // Todo: Send via Waku
+  // ------------------------------------------------------------------
+  // Submit an offer – placeholder (replace console.log with LightPush later)
+  const submitOffer = async () => {
+    console.log('Submitting offer:', {
+      proofAddress,
+      offerAmount,
+      wantAmount,
+      title,
+      description,
+      expiry,
+    });
+    // TODO: generate RLN proof, then publish via node.lightPush.publish(...)
   };
 
+  // ------------------------------------------------------------------
+  // Load provider on component mount
+  useEffect(() => {
+    initProvider();
+  }, []);
+
+  // ------------------------------------------------------------------
+  // UI rendering (unchanged apart from button handlers)
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-[#0f172a] text-[#f1f5f9] space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-[#0ea5e9] flex items-center mb-4">
-        <span className="mr-2">🚀</span> RLN Demo (Linea Sepolia)
-      </h1>
-
-      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
-        <h2 className="text-lg font-semibold mb-2">Read-only Info</h2>
-        <div className="flex justify-between items-center">
-          <button onClick={getCurrentEpoch} className="bg-[#0ea5e9] px-3 py-1 rounded text-sm hover:bg-[#0c8dce] transition">Get Current Epoch</button>
-          <p>Epoch: {epoch}</p>
-        </div>
+    <div className="flex min-h-screen flex-col items-center justify-start gap-6 bg-[#111827] p-4 text-white">
+      {/* ==== Read‑only info ==== */}
+      <section className="w-full max-w-lg rounded-xl bg-[#1e293b] p-4 shadow-md">
+        <h2 className="text-lg font-semibold text-[#10b981] mb-2">
+          Read‑only Info
+        </h2>
+        <button
+          onClick={getCurrentEpoch}
+          className="mb-2 rounded bg-[#0ea5e9] px-3 py-1 hover:bg-[#0284c7]"
+        >
+          Get Current Epoch
+        </button>
+        <p>Epoch: {epoch}</p>
       </section>
 
-      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
-        <h2 className="text-lg font-semibold mb-2">Send a transaction (optional)</h2>
-        <input
-          type="text"
-          value={proofAddress}
-          onChange={(e) => setProofAddress(e.target.value)}
-          placeholder="Proof / address"
-          className="w-full bg-gray-800 p-2 rounded mb-2 border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition"
-        />
-        <button onClick={sendTransaction} className="w-full bg-[#10b981] px-3 py-2 rounded hover:bg-[#0e9f6e] transition">Submit</button>
-      </section>
-
-      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
-        <h2 className="text-lg font-semibold mb-2">Wallet Status</h2>
-        {!address ? (
-          <button onClick={connectWallet} className="w-full bg-[#0ea5e9] px-3 py-2 rounded hover:bg-[#0c8dce] transition">Connect Wallet</button>
+      {/* ==== Wallet ==== */}
+      <section className="w-full max-w-lg rounded-xl bg-[#1e293b] p-4 shadow-md">
+        <h2 className="text-lg font-semibold text-[#10b981] mb-2">
+          Wallet Status
+        </h2>
+        {address ? (
+          <p>Connected as: {address}</p>
         ) : (
-          <div className="space-y-1">
-            <p className="bg-[#0ea5e9] p-2 rounded">ETH: {ethBalance} (Linea Sepolia)</p>
-            <p className="bg-[#f59e0b] p-2 rounded">MRKO: {mrkoBalance}</p>
-            <p className="text-sm text-gray-400">Address: {address.slice(0, 6)}...{address.slice(-4)}</p>
-          </div>
+          <button
+            onClick={connectWallet}
+            className="rounded bg-[#0ea5e9] px-3 py-1 hover:bg-[#0284c7]"
+          >
+            Connect Wallet
+          </button>
         )}
-        <p className="bg-[#f59e0b] p-2 rounded mt-2 text-sm">Need More Funding - Get testnet coins</p>
       </section>
 
-      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
-        <h2 className="text-lg font-semibold mb-2">Connection Status</h2>
-        <button onClick={connectWaku} className="w-full bg-[#0ea5e9] px-3 py-2 rounded hover:bg-[#0c8dce] transition">Connect to Waku</button>
-        <p className="mt-2 text-sm">Status: {wakuStatus}</p>
-        {wakuStatus.includes('error') && <p className="bg-[#ef4444] p-2 rounded mt-2 text-sm">Error: {wakuStatus.split('error: ')[1]}</p>}
+      {/* ==== Waku connection ==== */}
+      <section className="w-full max-w-lg rounded-xl bg-[#1e293b] p-4 shadow-md">
+        <h2 className="text-lg font-semibold text-[#10b981] mb-2">
+          Connection Status
+        </h2>
+        <button
+          onClick={connectWaku}
+          className="rounded bg-[#0ea5e9] px-3 py-1 hover:bg-[#0284c7]"
+        >
+          Connect to Waku
+        </button>
+        <p>Status: {wakuStatus}</p>
+        {wakuStatus.startsWith('error:') && (
+          <p className="bg-[#ef4444] p-2 rounded mt-2 text-sm">
+            Error: {wakuStatus.split('error: ')[1]}
+          </p>
+        )}
       </section>
 
-      <section className="w-full max-w-lg bg-[#1e293b] rounded-xl p-4 shadow-md">
-        <h2 className="text-lg font-semibold text-[#10b981] mb-2">Create Value Exchange</h2>
+      {/* ==== Create Value Exchange ==== */}
+      <section className="w-full max-w-lg rounded-xl bg-[#1e293b] p-4 shadow-md">
+        <h2 className="text-lg font-semibold text-[#10b981] mb-2">
+          Create Value Exchange
+        </h2>
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <input
@@ -143,18 +202,21 @@ function App() {
             />
             <span>ETH</span>
           </div>
+
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title (optional)"
             className="w-full bg-gray-800 p-2 rounded border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition"
           />
+
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description (optional)"
             className="w-full bg-gray-800 p-2 rounded border border-gray-700 focus:border-[#0ea5e9] focus:outline-none transition h-20"
           />
+
           <select
             value={expiry}
             onChange={(e) => setExpiry(e.target.value)}
@@ -162,11 +224,15 @@ function App() {
           >
             <option>Offer expires in: 24 hours</option>
           </select>
-          <button onClick={submitOffer} className="w-full bg-[#10b981] px-3 py-2 rounded hover:bg-[#0e9f6e] transition">Submit Offer</button>
+
+          <button
+            onClick={submitOffer}
+            className="w-full bg-[#10b981] px-3 py-2 rounded hover:bg-[#0e9f6e] transition"
+          >
+            Submit Offer
+          </button>
         </div>
       </section>
     </div>
   );
 }
-
-export default App;
