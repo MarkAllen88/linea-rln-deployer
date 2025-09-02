@@ -44,7 +44,7 @@ export default function App() {
       if (result.successes.length > 0) {
         alert(`✅ Message successfully sent to ${result.successes.length} peer(s)!`)
       } else {
-        alert(`��� Message failed to send. Check the nwaku node console.`)
+        alert(`����� Message failed to send. Check the nwaku node console.`)
         console.error('Push failures:', result.failures)
       }
     } catch (e) {
