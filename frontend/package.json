@@ -10,11 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@chainsafe/libp2p-noise": "^16.1.4",
+    "@libp2p/mplex": "^11.0.47",
+    "@libp2p/websockets": "^9.2.19",
     "@tailwindcss/vite": "^4.1.12",
     "@waku/rln": "^0.1.8",
     "@waku/sdk": "^0.0.34",
     "dotenv": "^17.2.1",
     "ethers": "^6.15.0",
+    "libp2p": "^2.8.11",
     "protobufjs": "^7.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

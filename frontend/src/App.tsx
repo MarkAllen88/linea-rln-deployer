@@ -1,85 +1,96 @@
-// src/App.tsx   (or src/app.tsx depending on your naming)
+// src/App.tsx
 import React, { useEffect, useState } from 'react'
 import { getWaku } from './lib/wakuClient'
 import type { Waku } from '@waku/sdk'
-import { Message } from '@waku/interfaces'
+import type { Message } from '@waku/interfaces'
+
+// We will send and receive messages on this topic.
+const contentTopic = '/markop2pworld/1/chat/proto'
 
 export default function App() {
-  // UI state ---------------------------------------------------------
-  const [status, setStatus] = useState<string>('⏳ Initialising…')
+  const [status, setStatus] = useState<string>('⏳ Initialising���')
   const [waku, setWaku] = useState<Waku | null>(null)
 
-  // -----------------------------------------------------------------
-  // 1️⃣ Initialise Waku once on mount
-  // -----------------------------------------------------------------
   useEffect(() => {
+    if (waku) return
     ;(async () => {
       try {
-        // Pass the hostname of the node; defaults to current page host.
         const client = await getWaku()
         setWaku(client)
-        setStatus('✅ Connected to markop2pworld')
+        setStatus('✅ Connected to local Waku node')
       } catch (err) {
-        console.error(err)
-        setStatus('❌ Could not connect – see console')
+        console.error('Error connecting to local Waku node:', err)
+        setStatus('❌ Could not connect. Is the local nwaku node running?')
       }
     })()
-  }, [])
-
-  // -----------------------------------------------------------------
-  // 2️⃣ OPTIONAL: Subscribe to the default relay topic to see inbound msgs
-  // -----------------------------------------------------------------
-  useEffect(() => {
-    if (!waku) return
-
-    const sub = waku.relay.subscribe(
-      '/waku/2/default-waku/proto',
-      (msg: Message) => {
-        const txt = new TextDecoder().decode(msg.payload ?? new Uint8Array())
-        console.log('📩 Received (relay):', txt)
-      }
-    )
-
-    // Cleanup on unmount
-    return () => sub?.unsubscribe()
   }, [waku])
 
-  // -----------------------------------------------------------------
-  // 3️⃣ Publish a test payload via LightPush (fast, no gossip)
-  // -----------------------------------------------------------------
-  const sendTest = async () => {
-    if (!waku) return
+  // **FEEDBACK LOOP:** This useEffect subscribes to our topic.
+  useEffect(() => {
+    if (!waku || !waku.relay) return
 
-    const payload = new TextEncoder().encode('👋 Hello from Lumo‑powered React app!')
+    let unsubscribe: (() => void) | undefined;
+    
+    // Give the connection a moment to stabilize before subscribing. This handles the race condition.
+    const timer = setTimeout(() => {
+      (async () => {
+        try {
+          const subscription = await waku.relay.subscribe(
+            contentTopic,
+            (msg: Message) => {
+              const txt = new TextDecoder().decode(msg.payload ?? new Uint8Array())
+              console.log('���� Message Received:', txt)
+              alert(`📩 New Message Received:\n\n${txt}`)
+            }
+          )
+          unsubscribe = subscription.unsubscribe
+          console.log('✅ Subscribed to Relay topic:', contentTopic)
+        } catch (e) {
+          console.error(`Failed to subscribe to Relay topic: ${e.message}`)
+        }
+      })();
+    }, 500); // 500ms delay for stabilization
+
+    // Cleanup function to unsubscribe when the component unmounts
+    return () => {
+      clearTimeout(timer);
+      unsubscribe?.()
+    }
+  }, [waku])
+
+  const sendTest = async () => {
+    // We removed the failing `waitForRemotePeer` check.
+    if (!waku || !waku.lightPush) {
+      alert('Waku lightPush is not ready yet, please wait a moment.')
+      return
+    }
+
     try {
-      await waku.lightPush.publish(payload, {
-        contentTopic: '/example/1/app' // arbitrary, just needs to be a string
+      const payload = new TextEncoder().encode(`👋 Hello! The time is ${new Date().toLocaleTimeString()}`)
+      const result = await waku.lightPush.send({
+        contentTopic: contentTopic, // Send to the same topic we are listening on
+        payload: payload,
       })
-      alert('✅ Message pushed to the node')
+
+      if (result.successes.length > 0) {
+        console.log(`Message successfully sent to local node!`)
+        // The success alert will now come from our subscription callback.
+      } else {
+        alert(`❌ Message failed to send. Check the nwaku node console.`)
+        console.error('Push failures:', result.failures)
+      }
     } catch (e) {
-      console.error('Publish failed', e)
+      console.error('Publish failed:', e)
       alert('❌ Publish error – check console')
     }
   }
 
-  // -----------------------------------------------------------------
-  // Render UI
-  // -----------------------------------------------------------------
   return (
     <div style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
       <h1>🚀 Markop2pworld Demo</h1>
       <p>{status}</p>
-
       {waku && (
-        <button
-          onClick={sendTest}
-          style={{
-            marginTop: '1rem',
-            padding: '0.6rem 1.2rem',
-            fontSize: '1rem',
-            cursor: 'pointer'
-          }}
-        >
+        <button onClick={sendTest} style={{ marginTop: '1rem', padding: '0.6rem', fontSize: '1rem' }}>
           Send test LightPush message
         </button>
       )}
