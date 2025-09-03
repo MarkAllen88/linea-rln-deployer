@@ -1,25 +1,26 @@
 {
-  "name": "rln-hardhat-standalone",
-  "version": "1.0.0",
-  "description": "A standalone Hardhat project for deploying and interacting with an RLN contract.",
+  "name": "frontend",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "compile": "npx hardhat compile --config ./hardhat.config.cjs",
-    "deploy": "node scripts/deploy.js",
-    "interact": "node scripts/interact.js",
-    "clean": "npx hardhat clean --config ./hardhat.config.cjs"
-  },
-  "devDependencies": {
-    "@nomicfoundation/hardhat-ethers": "^3.1.0",
-    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
-    "@types/node": "^24.3.0",
-    "dotenv": "^17.2.1",
-    "ethers": "^6.15.0",
-    "hardhat": "^2.26.3",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5174"
   },
   "dependencies": {
-    "@waku/sdk": "^0.0.34"
+    "@multiformats/multiaddr": "^12.1.11",
+    "@waku/sdk": "^0.0.34",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^20.14.10",
+    "@vitejs/plugin-react": "^4.3.1",
+    "postcss": "^8.4.45",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.0"
   }
 }

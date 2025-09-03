@@ -1,26 +1,31 @@
-// src/lib/wakuClient.ts
-import { createLightNode } from '@waku/sdk'
-import type { Waku } from '@waku/sdk'
+import { createLightNode } from '@waku/sdk';
+import { multiaddr } from '@multiformats/multiaddr';
 
-// Multiaddress for the local nwaku node running from the rln-hardhat-standalone project
-const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws'
+// Multiaddress for the local nwaku node
+// const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws';
+// const localNodeMultiaddr = '/dns4/localhost/tcp/60000/ws/p2p/16Uiu2HAkw8wAzCndKyvfHZj5JqLEU5i7VcUAgxpjzZUPVw5F2qiz';
+// const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws/p2p/16Uiu2HAkw8wAzCndKyvfHZj5JqLEU5i7VcUAgxpjzZUPVw5F2qiz';
+const localNodeMultiaddr = '/dns4/localhost/tcp/60000/ws/p2p/32ee547b3decdb2a326625d1af592c695181fc219cf8571bd3b1e029963ffb6b';
+// const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws/32ee547b3decdb2a326625d1af592c695181fc219cf8571bd3b1e029963ffb6b';
 
-let wakuSingleton: Waku | null = null
+let wakuSingleton: any = null;
 
-export async function getWaku(): Promise<Waku> {
-  if (wakuSingleton) return wakuSingleton
+export async function getWaku(): Promise<any> {
+  if (wakuSingleton) return wakuSingleton;
 
-  wakuSingleton = await createLightNode({
-    // Do not use the public fleet
-    defaultBootstrap: false,
-    // Connect directly to our known, local node
-    bootstrap: () => {
-      return [localNodeMultiaddr]
-    },
-  })
+  const node = await createLightNode({
+    defaultBootstrap: false
+  });
 
-  await wakuSingleton.start()
-  console.log('✅ Waku node started and connecting to local peer')
+  await node.start();
 
-  return wakuSingleton
+  try {
+    await node.libp2p.dial(multiaddr(localNodeMultiaddr));
+  } catch (err) {
+    console.warn('Could not dial local Waku node at', localNodeMultiaddr, err);
+  }
+
+  console.log('✅ Waku node started and connecting to local peer');
+  wakuSingleton = node;
+  return node;
 }
