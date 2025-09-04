@@ -1,5 +1,7 @@
 import { createLightNode } from '@waku/sdk';
 import { multiaddr } from '@multiformats/multiaddr';
+import { webSockets } from '@libp2p/websockets';
+import { all } from '@libp2p/websockets/filters';
 
 // Multiaddress for the local nwaku node
 // const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws';
@@ -8,6 +10,12 @@ import { multiaddr } from '@multiformats/multiaddr';
 // const localNodeMultiaddr = '/dns4/localhost/tcp/60000/ws/p2p/32ee547b3decdb2a326625d1af592c695181fc219cf8571bd3b1e029963ffb6b';
 const localNodeMultiaddr = import.meta.env.VITE_WAKU_NODE_MULTIADDR!;
 // const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws/32ee547b3decdb2a326625d1af592c695181fc219cf8571bd3b1e029963ffb6b';
+
+const waku = await createLightNode({
+  libp2p: {
+    transports: [webSockets({ filter: all })]
+  }
+});
 
 let wakuSingleton: any = null;
 
