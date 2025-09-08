@@ -1,40 +1,45 @@
-import { createLightNode } from '@waku/sdk';
-import { multiaddr } from '@multiformats/multiaddr';
-import { webSockets } from '@libp2p/websockets';
-import { all } from '@libp2p/websockets/filters';
+import { createLightNode, waitForRemotePeer, Protocols } from "@waku/sdk";
+import { multiaddr } from "@multiformats/multiaddr";
+// These imports are required to explicitly enable the WebSocket transport
+import { webSockets } from "@libp2p/websockets";
+import { all } from "@libp2p/websockets/filters";
 
-// Multiaddress for the local nwaku node
-// const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws';
-// const localNodeMultiaddr = '/dns4/localhost/tcp/60000/ws/p2p/16Uiu2HAkw8wAzCndKyvfHZj5JqLEU5i7VcUAgxpjzZUPVw5F2qiz';
-// const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws/p2p/16Uiu2HAkw8wAzCndKyvfHZj5JqLEU5i7VcUAgxpjzZUPVw5F2qiz';
-// const localNodeMultiaddr = '/dns4/localhost/tcp/60000/ws/p2p/32ee547b3decdb2a326625d1af592c695181fc219cf8571bd3b1e029963ffb6b';
 const localNodeMultiaddr = import.meta.env.VITE_WAKU_NODE_MULTIADDR!;
-// const localNodeMultiaddr = '/ip4/127.0.0.1/tcp/60000/ws/32ee547b3decdb2a326625d1af592c695181fc219cf8571bd3b1e029963ffb6b';
-
-const waku = await createLightNode({
-  libp2p: {
-    transports: [webSockets({ filter: all })]
-  }
-});
 
 let wakuSingleton: any = null;
 
 export async function getWaku(): Promise<any> {
+  // If the singleton instance already exists, return it
   if (wakuSingleton) return wakuSingleton;
 
+  console.log("Creating Waku Light Node with WebSocket transport...");
   const node = await createLightNode({
-    defaultBootstrap: false
+    defaultBootstrap: false,
+    // This is the critical missing piece.
+    // We must explicitly tell the node how to handle WebSocket addresses.
+    libp2p: {
+      transports: [webSockets({ filter: all })],
+    },
+    shardInfo: { clusterId: 16, shards: [0] }
   });
 
   await node.start();
 
   try {
+    console.log("Waku node dialing...");
     await node.libp2p.dial(multiaddr(localNodeMultiaddr));
+    console.log("Waku node waiting for a peer with Light Push...");
+    await waitForRemotePeer(node, [Protocols.LightPush]);
   } catch (err) {
-    console.warn('Could not dial local Waku node at', localNodeMultiaddr, err);
+    console.error(
+      "Could not dial or find peer with required protocols at",
+      localNodeMultiaddr,
+      err
+    );
+    throw err;
   }
 
-  console.log('✅ Waku node started and connecting to local peer');
+  console.log("✅ Waku node started and connected to a peer with Light Push");
   wakuSingleton = node;
   return node;
 }

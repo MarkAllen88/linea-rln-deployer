@@ -15,6 +15,7 @@
 ./frontend/dist/vite.svg
 ./frontend/node_modules/.package-lock.json
 ./frontend/README.md
+./frontend/rln-hardhat-standalone‑structure.txt
 ./frontend/public/favicon.ico
 ./frontend/public/vite.svg
 ./frontend/.gitignore

@@ -1,53 +1,71 @@
-import { useEffect, useState } from 'react';
-import { waitForRemotePeer, Protocols } from '@waku/sdk';
+import { useEffect, useState, useRef } from 'react';
 import { getWaku } from './lib/wakuClient';
+import { createEncoder } from '@waku/sdk';
 
 export default function App() {
   const [status, setStatus] = useState<string>('⏳ Initialising…');
-  // Use 'any' to avoid type issues with SDK versions
+  const [isReady, setIsReady] = useState<boolean>(false);
   const [waku, setWaku] = useState<any>(null);
 
+  // useRef to prevent double-initialization in React Strict Mode
+  const isInitializing = useRef(false);
+
   useEffect(() => {
-    if (waku) return;
+    if (isInitializing.current || waku) return;
+    isInitializing.current = true;
+
     (async () => {
       try {
+        setStatus('⏳ Connecting to local Waku node...');
         const client = await getWaku();
         setWaku(client);
-        setStatus('✅ Connected to local Waku node');
+        setStatus('✅ Waku node is ready!');
+        setIsReady(true);
       } catch (err) {
-        console.error('Error connecting to local Waku node:', err);
-        setStatus('❌ Could not connect. Is the local nwaku node running?');
+        console.error('Error initializing Waku node:', err);
+        setStatus('❌ Could not connect. Is the local nwaku node running and configured?');
       }
     })();
   }, [waku]);
 
   const sendTest = async () => {
+    console.log('Button clicked - starting sendTest');
     if (!waku || !waku.lightPush) {
+      console.error('Waku or lightPush not ready');
       alert('Waku lightPush is not ready yet.');
       return;
     }
 
     try {
-      await waitForRemotePeer(waku, [Protocols.LightPush]);
-
+      console.log('Preparing payload');
       const payload = new TextEncoder().encode(
         `👋 Hello! The time is ${new Date().toTimeString()}`
       );
 
-      const result = await waku.lightPush.send({
-        contentTopic: '/example/1/app',
-        payload
-      });
+        console.log('Preparing encoder');
+        const encoder = createEncoder({ contentTopic: '/example/1/app/proto' });
+        if (!encoder.routingInfo) encoder.routingInfo = {};
+        encoder.routingInfo.pubsubTopic = '/waku/2/rs/0/0'; // Explicitly set pubsubTopic in routingInfo
+        console.log('Encoder object:', encoder);
+
+      console.log('Sending LightPush message');
+      const result = await waku.lightPush.send(encoder, { payload });
+
+      console.log('Send result:', result);
 
       if (result.successes.length > 0) {
         alert(`✅ Message successfully sent to ${result.successes.length} peer(s)!`);
       } else {
-        alert('❌ Message failed to send. Check the nwaku node console.');
-        console.error('Push failures:', result.failures);
+        // Corrected line:
+        console.log('Push failures:', result.failures.map(f => f.error));
+        const failureReason = result.failures.length > 0
+          ? (result.failures[0] as any).error || 'Unknown' // Type assertion for safety
+          : 'Unknown reason';
+        alert(`❌ Message failed to send. Reason: ${failureReason}`);
       }
     } catch (e) {
+      console.error('Send error:', e);
       const msg = e instanceof Error ? e.message : String(e);
-      console.error('Publish failed:', e);
       alert(`❌ Publish error: ${msg}`);
     }
   };
@@ -59,9 +77,16 @@ export default function App() {
       {waku && (
         <button
           onClick={sendTest}
-          style={{ marginTop: '1rem', padding: '0.6rem', fontSize: '1rem' }}
+          disabled={!isReady}
+          style={{
+            marginTop: '1rem',
+            padding: '0.6rem',
+            fontSize: '1rem',
+            cursor: isReady ? 'pointer' : 'not-allowed',
+            opacity: isReady ? 1 : 0.6
+          }}
         >
-          Send test LightPush message
+          {isReady ? 'Send test LightPush message' : 'Waiting for connection...'}
         </button>
       )}
     </div>
